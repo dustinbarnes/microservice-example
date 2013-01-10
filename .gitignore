@@ -4,3 +4,7 @@
 *.jar
 *.war
 *.ear
+*.idea*
+*/target/*
+
+photo-service/service/target/dependency-reduced-pom.xml

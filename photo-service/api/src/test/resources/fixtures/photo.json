@@ -1,0 +1,6 @@
+{
+    "userid": "foo",
+    "fileSystemPath": "/var/tmp/abc123",
+    "webUrlPath": "http://localhost:8080/abc123",
+    "caption": "caption time"
+}
