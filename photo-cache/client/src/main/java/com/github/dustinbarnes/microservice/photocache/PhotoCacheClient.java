@@ -32,6 +32,11 @@ public class PhotoCacheClient
         client = new HttpClientBuilder().build();
     }
 
+    public void prepareForShutdown()
+    {
+        client.getConnectionManager().shutdown();
+    }
+
     public List<Photo> getPhotos(String user) throws IOException
     {
         HttpGet get = new HttpGet(basePath + "/" + user + "/photos");
