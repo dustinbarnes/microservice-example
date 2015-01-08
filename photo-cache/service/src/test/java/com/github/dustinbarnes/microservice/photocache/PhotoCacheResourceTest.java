@@ -1,74 +1,106 @@
 package com.github.dustinbarnes.microservice.photocache;
 
 import com.github.dustinbarnes.microservice.photocache.api.Photo;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.GenericType;
-import com.yammer.dropwizard.testing.ResourceTest;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.SpringApplicationConfiguration;
+import org.springframework.boot.test.TestRestTemplate;
+import org.springframework.boot.test.WebIntegrationTest;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.web.client.RestTemplate;
 
-import javax.ws.rs.core.MediaType;
-
+import java.util.Arrays;
 import java.util.List;
 
-import static junit.framework.Assert.assertTrue;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.Assert.assertThat;
 
-public class PhotoCacheResourceTest extends ResourceTest
-{
+
+@RunWith(SpringJUnit4ClassRunner.class)
+@SpringApplicationConfiguration(classes = PhotoCacheApplication.class)
+@WebIntegrationTest({"server.port=0", "management.port=0"})
+public class PhotoCacheResourceTest {
     private final Photo photo = new Photo("test", "/tmp/abc123", "/abc123", "caption");
 
-    @Override
-    protected void setUpResources()
-    {
-        addResource(new PhotoCacheResource(new PhotoCacheConfiguration()));
-    }
+    @Value("${local.server.port}")
+    int port;
+
+    RestTemplate restTemplate = new TestRestTemplate();
 
     @Test
-    public void testExpecting404OnPost()
-    {
-        ClientResponse response = client()
-                .resource("/404person/photos")
-                .type(MediaType.APPLICATION_JSON_TYPE)
-                .post(ClientResponse.class, photo);
+    public void testExpecting404OnPost() {
+        String url = "http://localhost:" + port + "/404foo/photos";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<Photo> entity = new HttpEntity<>(photo, headers);
+
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST,
+                entity, String.class);
 
         assertThat("Posting with a 404 prefix for user id generates 404",
-                response.getClientResponseStatus(),
-                equalTo(ClientResponse.Status.NOT_FOUND));
+                response.getStatusCode(),
+                equalTo(HttpStatus.NOT_FOUND));
     }
 
     @Test
-    public void testExpecting500OnPost()
-    {
-        ClientResponse response = client()
-                .resource("/500foo/photos")
-                .type(MediaType.APPLICATION_JSON_TYPE)
-                .post(ClientResponse.class, photo);
+    public void testExpecting500OnPost() {
+        String url = "http://localhost:" + port + "/500foo/photos";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<Photo> entity = new HttpEntity<>(photo, headers);
+
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST,
+                entity, String.class);
 
         assertThat("Posting with a 500 prefix for user id generates server error",
-                response.getClientResponseStatus(),
-                equalTo(ClientResponse.Status.INTERNAL_SERVER_ERROR));
+                response.getStatusCode(),
+                equalTo(HttpStatus.INTERNAL_SERVER_ERROR));
     }
 
     @Test
-    public void testExpecting201OnPost()
-    {
-        ClientResponse response = client()
-                .resource("/doggy/photos")
-                .type(MediaType.APPLICATION_JSON_TYPE)
-                .post(ClientResponse.class, photo);
+    public void testExpecting201OnPost() {
+        String url = "http://localhost:" + port + "/doggy/photos";
 
-        assertThat("Posting valid data gets us the proper code",
-                response.getClientResponseStatus(),
-                equalTo(ClientResponse.Status.CREATED));
+        HttpHeaders headers = new HttpHeaders();
+        headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<Photo> entity = new HttpEntity<>(photo, headers);
+
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST,
+                entity, String.class);
+
+        assertThat(response.getStatusCode(), equalTo(HttpStatus.CREATED));
     }
 
     @Test
-    public void testGettingPhotos()
-    {
-        List<Photo> photos = client()
-                .resource("/doggy/photos")
-                .get(new GenericType<List<Photo>>(){});
+    public void testGettingPhotos() {
+        String url = "http://localhost:" + port + "/doggy/photos";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+
+        ParameterizedTypeReference<List<Photo>> type = new ParameterizedTypeReference<List<Photo>>(){};
+
+        ResponseEntity<List<Photo>> response = restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<Void>(headers), type);
+
+        assertThat(response.getStatusCode(), equalTo(HttpStatus.OK));
+
+        List<Photo> photos = response.getBody();
 
         assertThat("We got some photos",
                 photos,

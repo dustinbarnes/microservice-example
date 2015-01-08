@@ -1,9 +1,13 @@
 package com.github.dustinbarnes.microservice.photocache;
 
 import com.github.dustinbarnes.microservice.photocache.api.Photo;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.SpringApplicationConfiguration;
+import org.springframework.boot.test.WebIntegrationTest;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.io.IOException;
 import java.util.List;
@@ -13,43 +17,22 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.notNullValue;
 
-public class PhotoCacheClientTest
-{
-    private static PhotoCacheService photoCacheService = null;
-    private static PhotoCacheClient client = null;
+@RunWith(SpringJUnit4ClassRunner.class)
+@SpringApplicationConfiguration(classes = PhotoCacheApplication.class)
+@WebIntegrationTest({"server.port=0", "management.port=0"})
+public class PhotoCacheClientTest {
+    @Value("${local.server.port}")
+    int port;
 
-    @BeforeClass
-    public static void createEmbeddedService() throws Exception
-    {
-        photoCacheService = new PhotoCacheService();
-        photoCacheService.startEmbeddedServer();
-        if ( !photoCacheService.isEmbeddedServerRunning() )
-        {
-            throw new Exception("Unable to start service");
-        }
+    PhotoCacheClient client;
 
-        client = new PhotoCacheClient("http://localhost:8080", "http://localhost:8081");
-    }
-
-    @AfterClass
-    public static void stopEmbeddedService() throws Exception
-    {
-        if ( client != null )
-        {
-            client.prepareForShutdown();
-        }
-
-        if ( photoCacheService.isEmbeddedServerRunning() )
-        {
-            photoCacheService.stopEmbeddedServer();
-        }
+    @Before
+    public void configureClient() {
+        client = new PhotoCacheClient("http://localhost:" + port);
     }
 
     @Test
-    public void testFoo() throws IOException
-    {
-        client.ping();
-
+    public void testPhotos() throws IOException {
         List<Photo> photos = client.getPhotos("abc123");
         assertThat(photos, notNullValue());
         assertThat(photos.size(), greaterThan(1));
