@@ -1,20 +1,26 @@
 package com.github.dustinbarnes.microservice.photocache.api;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 
-import static com.yammer.dropwizard.testing.JsonHelpers.*;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
-public class PhotoTest
-{
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertThat;
+
+
+public class PhotoTest {
+    private ObjectMapper JSON = new ObjectMapper();
+
     @Test
     public void PhotoSerializesCorrectly() throws Exception
     {
         Photo photo = new Photo("foo", "/var/tmp/abc123", "http://localhost:8080/abc123", "caption time");
         assertThat("Serialization works correctly",
-                asJson(photo),
-                is(equalTo(jsonFixture("fixtures/photo.json"))));
+                JSON.writeValueAsString(photo),
+                is(equalTo(jsonFixture())));
     }
 
     @Test
@@ -22,7 +28,16 @@ public class PhotoTest
     {
         Photo photo = new Photo("foo", "/var/tmp/abc123", "http://localhost:8080/abc123", "caption time");
         assertThat("Deserialization works correctly",
-                fromJson(jsonFixture("fixtures/photo.json"), Photo.class),
+                JSON.readValue(jsonFixture(), Photo.class),
                 is(equalTo(photo)));
+    }
+
+    private String jsonFixture() {
+        try {
+            return new String(Files.readAllBytes(Paths.get(getClass().getResource("/fixtures/photo.json").toURI())));
+        } catch ( Exception e ) {
+            e.printStackTrace();
+            return "";
+        }
     }
 }
