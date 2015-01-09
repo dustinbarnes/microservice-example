@@ -25,8 +25,7 @@ public class PhotoCacheClient
          this.basePath = basePath;
     }
 
-    public List<Photo> getPhotos(String user) throws IOException
-    {
+    public List<Photo> getPhotos(String user) throws IOException {
         String url = basePath + "/" + user + "/photos";
 
         HttpHeaders headers = new HttpHeaders();
@@ -40,8 +39,7 @@ public class PhotoCacheClient
         return response.getBody();
     }
 
-    public Future<List<Photo>> getPhotosAsync(final String user, ExecutorService executorService) throws IOException
-    {
+    public Future<List<Photo>> getPhotosAsync(final String user, ExecutorService executorService) throws IOException {
         return executorService.submit(() -> getPhotos(user));
     }
 }

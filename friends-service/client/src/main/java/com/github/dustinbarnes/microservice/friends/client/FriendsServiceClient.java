@@ -1,64 +1,42 @@
 package com.github.dustinbarnes.microservice.friends.client;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.dustinbarnes.microservice.friends.api.Friend;
-import com.yammer.dropwizard.client.HttpClientBuilder;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
 
-import javax.ws.rs.core.MediaType;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
-public class FriendsServiceClient
-{
-    ObjectMapper om = new ObjectMapper();
-
-    private HttpClient client;
+public class FriendsServiceClient {
     private String basePath;
-    private String adminBasePath;
 
-    public FriendsServiceClient(String basePath, String adminBasePath)
-    {
+    public FriendsServiceClient(String basePath) {
         this.basePath = basePath;
-        this.adminBasePath = adminBasePath;
-
-        client = new HttpClientBuilder().build();
     }
 
-    public List<Friend> getFriends(String user) throws IOException
-    {
-        HttpGet get = new HttpGet(basePath + "/" + user + "/friends");
-        get.setHeader("Accept", MediaType.APPLICATION_JSON);
-        HttpResponse response = client.execute(get);
-        return om.readValue(response.getEntity().getContent(), new TypeReference<List<Friend>>(){});
-    }
+    public List<Friend> getFriends(String user) throws IOException {
+            String url = basePath + "/" + user + "/friends";
 
-    public Future<List<Friend>> getFriendsAsync(final String user, ExecutorService executorService) throws IOException
-    {
-        return executorService.submit(new Callable<List<Friend>>()
-        {
-            @Override
-            public List<Friend> call() throws Exception
-            {
-                return getFriends(user);
-            }
-        });
-    }
+            HttpHeaders headers = new HttpHeaders();
+            headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
 
-    public void ping() throws IOException
-    {
-        HttpGet get = new HttpGet(adminBasePath + "/ping");
-        HttpResponse response = client.execute(get);
-        if ( response.getStatusLine().getStatusCode() != HttpStatus.SC_OK )
-        {
-            throw new RuntimeException("Expected 200 from ping, got " + response.getStatusLine().getStatusCode());
+            ParameterizedTypeReference<List<Friend>> type = new ParameterizedTypeReference<List<Friend>>(){};
+
+            ResponseEntity<List<Friend>> response = new RestTemplate().exchange(url,
+                    HttpMethod.GET, new HttpEntity<Void>(headers), type);
+
+            return response.getBody();
         }
-    }
+
+        public Future<List<Friend>> getFriendsAsync(final String user, ExecutorService executorService) throws IOException        {
+            return executorService.submit(() -> getFriends(user));
+        }
 }

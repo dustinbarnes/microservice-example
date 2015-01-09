@@ -15,10 +15,20 @@
             <artifactId>friends-service-api</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
-        <dependency>
-            <groupId>com.yammer.dropwizard</groupId>
-            <artifactId>dropwizard-client</artifactId>
-            <version>${dropwizard.version}</version>
-        </dependency>
-    </dependencies>
+            <dependency>
+                <groupId>com.github.dustinbarnes.microservice</groupId>
+                <artifactId>friends-service-service</artifactId>
+                <version>${project.parent.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-web</artifactId>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-test</artifactId>
+                <scope>test</scope>
+            </dependency>
+        </dependencies>
 </project>

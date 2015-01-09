@@ -1,5 +1,1 @@
-{
-    "userid": "foo",
-    "balance": 125.50,
-    "availableBalance": -118.25
-}
+{"userid":"foo","balance":125.5,"availableBalance":-118.25}

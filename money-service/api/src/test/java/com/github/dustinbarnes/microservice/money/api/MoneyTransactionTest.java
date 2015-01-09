@@ -1,31 +1,50 @@
 package com.github.dustinbarnes.microservice.money.api;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.Before;
 import org.junit.Test;
 
-import static com.yammer.dropwizard.testing.JsonHelpers.asJson;
-import static com.yammer.dropwizard.testing.JsonHelpers.fromJson;
-import static com.yammer.dropwizard.testing.JsonHelpers.jsonFixture;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
-public class MoneyTransactionTest
-{
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalToIgnoringWhiteSpace;
+
+
+public class MoneyTransactionTest {
+    private ObjectMapper JSON = new ObjectMapper();
+
+    @Before
+    public void setupNullHandling() {
+        JSON = JSON.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+    }
+
     @Test
-    public void MoneyTransactionSerializesCorrectly() throws Exception
-    {
-        MoneyTransaction transaction = new MoneyTransaction("foo", 100.00f, null);
+    public void MoneyTransactionSerializesCorrectly() throws Exception {
+        MoneyTransaction transaction = new MoneyTransaction("foo", 100.00, null);
         assertThat("Serialization works correctly",
-                asJson(transaction),
-                is(equalTo(jsonFixture("fixtures/transaction.json"))));
+                JSON.writeValueAsString(transaction),
+                equalToIgnoringWhiteSpace(jsonFixture()));
     }
 
     @Test
     public void MoneyTransactionDeserializesCorrectly() throws Exception
     {
-        MoneyTransaction transaction = new MoneyTransaction("foo", 100.00f, null);
+        MoneyTransaction transaction = new MoneyTransaction("foo", 100.00, null);
         assertThat("Deserialization works correctly",
-                fromJson(jsonFixture("fixtures/transaction.json"), MoneyTransaction.class),
+                JSON.readValue(jsonFixture(), MoneyTransaction.class),
                 is(equalTo(transaction)));
+    }
+
+    private String jsonFixture() {
+        try {
+            return new String(Files.readAllBytes(Paths.get(getClass().getResource("/fixtures/transaction.json").toURI())));
+        } catch ( Exception e ) {
+            e.printStackTrace();
+            return "";
+        }
     }
 }

@@ -8,8 +8,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Photo
-{
+public class Photo {
     String userid;
     String fileSystemPath;
     String webUrlPath;
